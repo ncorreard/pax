@@ -52,6 +52,7 @@
     "all_levels": "All levels",
     "all_domains": "All domains",
     "none_found": "No exercises found",
+    "preview_hint": "Click an exercise to preview it",
     "exercises_count": "exercise(s)",
     "seed_label": "seed",
     "new_statement": "New statement",

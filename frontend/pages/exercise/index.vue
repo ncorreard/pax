@@ -2,9 +2,8 @@
   <div>
     <h1 class="text-2xl font-bold mb-6">{{ $t('nav.exercises') }}</h1>
 
-    <!-- Filtres -->
+    <!-- Filtres (pleine largeur) -->
     <div class="flex gap-3 mb-6 flex-wrap items-center">
-      <!-- Recherche plein texte avec sélecteur de scope -->
       <div class="flex flex-1 min-w-56 rounded-lg border overflow-hidden"
            style="border-color:var(--color-border)">
         <select v-model="searchScope"
@@ -44,94 +43,115 @@
         <label v-for="flag in qaFlags" :key="flag"
                class="inline-flex items-center gap-1.5 cursor-pointer">
           <input type="checkbox" v-model="qaFilters[flag]" />
-          <span class="font-mono text-xs">{{ qaLabels[flag] }}</span>
+          <span class="font-mono text-xs" :title="qaTooltips[flag]">{{ qaLabels[flag] }}</span>
         </label>
       </div>
     </div>
 
-    <!-- Skeleton loading -->
-    <div v-if="loading" class="space-y-3">
-      <div v-for="i in 6" :key="i" class="h-16 rounded-xl animate-pulse"
-           style="background:var(--color-surface)"></div>
-    </div>
+    <!-- Layout : liste seule sur petit écran, liste + preview sur lg+ -->
+    <div class="lg:flex lg:gap-6 lg:items-start">
 
-    <!-- Empty state -->
-    <div v-else-if="groupedModules.length === 0"
-         class="text-center py-16"
-         style="color:var(--color-text-muted)">
-      {{ $t('exercise.none_found') }}
-    </div>
+      <!-- Colonne gauche : liste (sticky + scrollable sur lg+) -->
+      <div class="lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
 
-    <!-- Modules groupés par domaine -->
-    <div v-else class="space-y-8">
-      <div v-for="group in groupedModules" :key="group.domain">
-        <!-- En-tête de domaine -->
-        <h2 class="text-sm font-semibold uppercase tracking-wider mb-3"
-            style="color:var(--color-text-muted)">
-          {{ group.domain }}
-        </h2>
+        <!-- Skeleton loading -->
+        <div v-if="loading" class="space-y-3">
+          <div v-for="i in 6" :key="i" class="h-16 rounded-xl animate-pulse"
+               style="background:var(--color-surface)"></div>
+        </div>
 
-        <div class="space-y-2">
-          <div v-for="mod in group.modules" :key="mod.module"
-               class="rounded-xl border overflow-hidden"
-               style="background:var(--color-surface);border-color:var(--color-border)">
+        <!-- Empty state -->
+        <div v-else-if="groupedModules.length === 0"
+             class="text-center py-16"
+             style="color:var(--color-text-muted)">
+          {{ $t('exercise.none_found') }}
+        </div>
 
-            <!-- En-tête du module (cliquable) -->
-            <button class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-black/5 dark:hover:bg-white/5 transition"
-                    @click="toggle(mod.module)">
-              <div class="flex-1 min-w-0">
-                <span class="font-medium block truncate">{{ decodeEntities(mod.title) }}</span>
-                <div class="flex items-center gap-3 mt-1 flex-wrap">
-                  <span v-if="mod.author"
-                        class="text-xs"
-                        style="color:var(--color-text-muted)">
-                    {{ mod.author }}
-                  </span>
-                  <span class="text-xs px-2 py-0.5 rounded"
-                        style="background:var(--color-bg);color:var(--color-text-muted)">
-                    {{ mod.exercises.length }} {{ $t('exercise.exercises_count') }}
-                  </span>
+        <!-- Modules groupés par domaine -->
+        <div v-else class="space-y-6">
+          <div v-for="group in groupedModules" :key="group.domain">
+            <h2 class="text-xs font-semibold uppercase tracking-wider mb-2"
+                style="color:var(--color-text-muted)">
+              {{ group.domain }}
+            </h2>
+
+            <div class="space-y-1.5">
+              <div v-for="mod in group.modules" :key="mod.module"
+                   class="rounded-xl border overflow-hidden"
+                   style="background:var(--color-surface);border-color:var(--color-border)">
+
+                <button class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-black/5 dark:hover:bg-white/5 transition"
+                        @click="toggle(mod.module)">
+                  <div class="flex-1 min-w-0">
+                    <span class="font-medium text-sm block truncate">{{ decodeEntities(mod.title) }}</span>
+                    <div class="flex items-center gap-2 mt-0.5">
+                      <span v-if="mod.author" class="text-xs truncate"
+                            style="color:var(--color-text-muted)">{{ mod.author }}</span>
+                      <span class="text-xs px-1.5 py-0.5 rounded flex-shrink-0"
+                            style="background:var(--color-bg);color:var(--color-text-muted)">
+                        {{ mod.exercises.length }}
+                      </span>
+                    </div>
+                  </div>
+                  <span class="ml-2 flex-shrink-0 transition-transform duration-200"
+                        :style="openModules.has(mod.module) ? 'transform:rotate(90deg)' : ''"
+                        style="color:var(--color-text-muted)">›</span>
+                </button>
+
+                <div v-if="openModules.has(mod.module)"
+                     class="border-t"
+                     style="border-color:var(--color-border)">
+                  <NuxtLink v-for="ex in mod.exercises"
+                            :key="ex.id"
+                            :to="`/exercise/${ex.id}`"
+                            class="flex items-center justify-between px-4 py-2.5 transition group border-b last:border-b-0"
+                            :class="previewId === ex.id ? '' : 'hover:bg-black/5 dark:hover:bg-white/5'"
+                            :style="previewId === ex.id
+                              ? 'border-color:var(--color-border);background:color-mix(in srgb,var(--color-primary) 8%,transparent)'
+                              : 'border-color:var(--color-border)'"
+                            @click="onExerciseClick(ex.id, $event)">
+                    <span class="text-xs truncate transition"
+                          :style="previewId === ex.id ? 'color:var(--color-primary);font-weight:600' : ''">
+                      {{ decodeEntities(ex.title || ex.id) }}
+                    </span>
+                    <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
+                      <span v-if="!ex.has_def"
+                            class="text-xs font-bold px-1 py-0.5 rounded"
+                            style="background:#ef4444;color:#fff">OEF</span>
+                      <span class="text-xs"
+                            :style="previewId === ex.id ? 'color:var(--color-primary)' : 'color:var(--color-text-muted)'">
+                        {{ previewId === ex.id ? '▶' : '›' }}
+                      </span>
+                    </div>
+                  </NuxtLink>
                 </div>
               </div>
-              <span class="ml-4 text-lg transition-transform duration-200"
-                    :style="openModules.has(mod.module) ? 'transform:rotate(180deg)' : ''"
-                    style="color:var(--color-text-muted)">
-                ›
-              </span>
-            </button>
-
-            <!-- Liste d'exercices (accordéon) -->
-            <div v-if="openModules.has(mod.module)"
-                 class="border-t"
-                 style="border-color:var(--color-border)">
-              <NuxtLink v-for="ex in mod.exercises"
-                        :key="ex.id"
-                        :to="`/exercise/${ex.id}`"
-                        class="flex items-center justify-between px-6 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition group border-b last:border-b-0"
-                        style="border-color:var(--color-border)">
-                <span class="text-sm group-hover:text-blue-500 transition truncate">
-                  {{ decodeEntities(ex.title || ex.id) }}
-                </span>
-                <div class="ml-4 flex items-center gap-2 flex-shrink-0">
-                  <span v-if="!ex.has_def"
-                        class="text-xs font-bold px-1.5 py-0.5 rounded"
-                        style="background:#ef4444;color:#fff"
-                        title="Fichier .def absent — moteur OEF de secours">
-                    OEF
-                  </span>
-                  <span class="text-sm" style="color:var(--color-text-muted)">→</span>
-                </div>
-              </NuxtLink>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- Colonne droite : preview (invisible sur petit écran) -->
+      <div class="hidden lg:block lg:flex-1 lg:sticky lg:top-4 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
+        <ExerciseDetail v-if="previewId"
+                        :exercise-id="previewId"
+                        :key="previewId" />
+        <div v-else
+             class="rounded-xl border-2 border-dashed flex flex-col items-center justify-center py-24 text-center"
+             style="border-color:var(--color-border)">
+          <span class="text-4xl mb-4 opacity-30">📖</span>
+          <p class="text-sm" style="color:var(--color-text-muted)">
+            {{ $t('exercise.preview_hint') }}
+          </p>
+        </div>
+      </div>
+
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+definePageMeta({ layout: 'wide' })
 interface ModuleExercise {
   id: string
   title: string | null
@@ -146,6 +166,7 @@ interface ModuleExercise {
 type QAFlag = 'statement_ok' | 'answer_ok' | 'check_ok'
 const qaFlags: QAFlag[] = ['statement_ok', 'answer_ok', 'check_ok']
 const qaLabels: Record<QAFlag, string> = { statement_ok: 'E', answer_ok: 'R', check_ok: 'V' }
+const qaTooltips: Record<QAFlag, string> = { statement_ok: 'Énoncé ok', answer_ok: 'Réponse ok', check_ok: 'Vérification ok' }
 
 interface Module {
   module: string
@@ -178,6 +199,7 @@ function decodeEntities(s: string): string {
 
 const route = useRoute()
 const router = useRouter()
+const isLarge = useMediaQuery('(min-width: 1024px)')
 
 type SearchScope = 'all' | 'modules' | 'exercises'
 
@@ -187,21 +209,23 @@ const filterLevel = ref((route.query.level as string) || '')
 const filterDomain = ref((route.query.domain as string) || '')
 const searchQuery = ref((route.query.q as string) || '')
 const searchScope = ref<SearchScope>((route.query.scope as SearchScope) || 'modules')
+const previewId = ref<string | null>((route.query.preview as string) || null)
 const qaFilters = ref<Record<QAFlag, boolean>>({
   statement_ok: false, answer_ok: false, check_ok: false,
 })
 
-// Synchronise les filtres dans l'URL sans créer d'entrée dans l'historique
-watch([filterLevel, filterDomain, searchQuery, searchScope], ([level, domain, q, scope]) => {
+watch([filterLevel, filterDomain, searchQuery, searchScope, previewId], ([level, domain, q, scope, preview]) => {
   router.replace({
     query: {
-      ...(level  ? { level }  : {}),
-      ...(domain ? { domain } : {}),
-      ...(q      ? { q }      : {}),
+      ...(level   ? { level }   : {}),
+      ...(domain  ? { domain }  : {}),
+      ...(q       ? { q }       : {}),
       ...(scope !== 'all' ? { scope } : {}),
+      ...(preview ? { preview } : {}),
     },
   })
 }, { flush: 'sync' })
+
 const openModules = ref(new Set<string>())
 
 const levels = ['E1','E2','E3','E4','E5','E6','H1','H2','H3','H4','H5','H6','U1','U2','U3','U4']
@@ -253,13 +277,10 @@ const filteredModules = computed(() => {
 
       if (q) {
         if (scope === 'modules') {
-          // Le module doit matcher ; si non, on masque tout
           if (!moduleMatchesSearch(m, q)) return { ...m, exercises: [] }
         } else if (scope === 'exercises') {
-          // On filtre uniquement sur les exercices, le module n'est pas critère
           exercises = exercises.filter(ex => exerciseMatchesSearch(ex, q))
         } else {
-          // 'all' : module match → tous ses exercices ; sinon filtre par exercice
           if (!moduleMatchesSearch(m, q)) {
             exercises = exercises.filter(ex => exerciseMatchesSearch(ex, q))
           }
@@ -291,7 +312,17 @@ function toggle(moduleId: string) {
   }
 }
 
-// Auto-expand all modules when searching, collapse when query cleared
+function onExerciseClick(id: string, event: MouseEvent) {
+  // Ctrl/Cmd+clic : laisser le navigateur ouvrir dans un nouvel onglet
+  if (event.ctrlKey || event.metaKey) return
+  // Grand écran : afficher dans la preview sans naviguer
+  if (isLarge.value) {
+    event.preventDefault()
+    previewId.value = id
+  }
+  // Petit écran : navigation normale via NuxtLink
+}
+
 watch(searchQuery, (q) => {
   if (q.trim()) {
     openModules.value = new Set(filteredModules.value.map(m => m.module))

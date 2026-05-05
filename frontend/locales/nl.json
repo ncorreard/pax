@@ -52,6 +52,7 @@
     "all_levels": "Alle niveaus",
     "all_domains": "Alle domeinen",
     "none_found": "Geen oefeningen gevonden",
+    "preview_hint": "Klik op een oefening om een voorbeeld te zien",
     "exercises_count": "oefening(en)",
     "seed_label": "seed",
     "new_statement": "Nieuwe opgave",

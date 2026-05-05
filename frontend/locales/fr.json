@@ -52,6 +52,7 @@
     "all_levels": "Tout niveau",
     "all_domains": "Tout domaine",
     "none_found": "Aucun exercice trouvé",
+    "preview_hint": "Cliquez sur un exercice pour le prévisualiser",
     "exercises_count": "exercice(s)",
     "seed_label": "seed",
     "new_statement": "Nouvel énoncé",

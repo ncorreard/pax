@@ -7,7 +7,7 @@ from db import get_db
 from models.sheet import Sheet, SheetExercise
 from models.exercise import Exercise
 from models.user import User
-from api.schemas.sheet import SheetCreate, SheetExerciseAdd, SheetResponse, SheetDetailResponse
+from api.schemas.sheet import SheetCreate, SheetExerciseAdd, SheetResponse, SheetDetailResponse, SheetItemResponse
 from api.deps import get_current_user, require_role
 
 router = APIRouter(prefix="/api/sheets", tags=["sheets"])

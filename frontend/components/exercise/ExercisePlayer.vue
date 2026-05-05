@@ -153,11 +153,18 @@
     </div>
 
     <!-- Boutons -->
-    <div class="px-6 pb-6 flex items-center gap-3">
+    <div class="px-6 pb-6 flex items-center gap-3 flex-wrap">
       <button @click="submit" :disabled="loading || checking || submitted || !allFilled"
               class="px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-60"
               style="background:var(--color-primary);color:#fff">
         {{ submitted ? $t('exercise.corrected') : $t('exercise.verify') }}
+      </button>
+
+      <button v-if="debugOef && debugAnswers && !submitted"
+              @click="fillAnswers(debugAnswers)"
+              class="px-6 py-2.5 rounded-lg font-mono text-xs border border-dashed transition hover:opacity-80"
+              style="border-color:var(--color-text-muted);color:var(--color-text-muted)">
+        Remplir
       </button>
 
       <button v-if="submitted" @click="reload"
@@ -171,6 +178,11 @@
               style="border-color:var(--color-border);color:var(--color-text-muted)">
         {{ showHint ? $t('exercise.hint_hide') : $t('exercise.hint_show') }}
       </button>
+
+      <!-- Slot pour les tags QA debug (E/R/V), alignés à droite -->
+      <div class="ml-auto">
+        <slot name="qa" />
+      </div>
     </div>
 
     <!-- Indice -->
@@ -183,7 +195,10 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ exerciseId: string }>()
+const props = defineProps<{
+  exerciseId: string
+  debugAnswers?: Record<string, string> | null
+}>()
 const emit = defineEmits<{ rendered: [{ seed: number; exerciseId: string }] }>()
 
 const { apiFetch } = useApi()
@@ -504,5 +519,14 @@ watch(statementSegments, () => {
 
 // Charge au montage
 onMounted(() => load())
+
+// Remplit les champs de réponse avec les valeurs fournies (appelé depuis ExerciseDetail en mode debug)
+function fillAnswers(answers: Record<string, string>) {
+  for (const [name, value] of Object.entries(answers)) {
+    if (name in replies.value) replies.value[name] = value
+  }
+}
+
+defineExpose({ fillAnswers })
 </script>
 
