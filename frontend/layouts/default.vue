@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col" style="background:var(--color-bg);color:var(--color-text)">
-    <AppNav />
+    <LayoutAppNav />
     <main class="flex-1 container mx-auto px-4 py-8 max-w-4xl">
       <slot />
     </main>

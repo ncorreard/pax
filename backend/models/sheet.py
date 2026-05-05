@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import String, DateTime, Integer, SmallInteger, Numeric, Boolean, ForeignKey, Text
+from sqlalchemy import String, DateTime, Integer, SmallInteger, Numeric, Boolean, ForeignKey, Text  # noqa: F401
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 
@@ -50,8 +50,8 @@ class SheetExercise(Base):
     points: Mapped[int] = mapped_column(Integer, default=10)
     # weight : poids relatif pour la note globale (généralement 1)
     weight: Mapped[float] = mapped_column(Numeric, default=1.0)
-    # multiplicity : nombre d'essais autorisés (1 = une seule tentative)
-    multiplicity: Mapped[int] = mapped_column(Integer, default=1)
+    # multiplicity : coefficient de pondération du score (décimal possible : 0.3, 0.5, 1.5…)
+    multiplicity: Mapped[float] = mapped_column(Numeric, default=1.0)
     # prerequisite : condition de déblocage, ex. "1:90" ou "1+2:70"
     prerequisite: Mapped[str | None] = mapped_column(String(100), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)

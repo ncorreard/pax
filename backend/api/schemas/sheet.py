@@ -51,7 +51,7 @@ class SheetExerciseAdd(BaseModel):
     position: int = 0
     points: int = 10
     weight: float = 1.0
-    multiplicity: int = 1
+    multiplicity: float = 1.0
     prerequisite: str | None = None
     active: bool = True
 
@@ -72,7 +72,7 @@ class SheetItemResponse(BaseModel):
     position: int
     points: int
     weight: float
-    multiplicity: int
+    multiplicity: float
     prerequisite: str | None
     active: bool
     exercise: ExerciseResponse
