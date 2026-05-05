@@ -7,7 +7,7 @@ from db import get_db
 from models.sheet import Sheet, SheetExercise
 from models.exercise import Exercise
 from models.user import User
-from api.schemas.sheet import SheetCreate, SheetExerciseAdd, SheetResponse, SheetDetailResponse, SheetItemResponse
+from api.schemas.sheet import SheetCreate, SheetUpdate, SheetExerciseAdd, SheetResponse, SheetDetailResponse, SheetItemResponse
 from api.deps import get_current_user, require_role
 
 router = APIRouter(prefix="/api/sheets", tags=["sheets"])
@@ -80,6 +80,42 @@ async def add_exercise_to_sheet(
     db.add(item)
     await db.commit()
     return {"status": "ok"}
+
+
+@router.patch("/{sheet_id}", response_model=SheetResponse)
+async def update_sheet(
+    sheet_id: int,
+    data: SheetUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("teacher", "admin")),
+):
+    result = await db.execute(select(Sheet).where(Sheet.id == sheet_id))
+    sheet = result.scalar_one_or_none()
+    if not sheet:
+        raise HTTPException(status_code=404, detail="Feuille introuvable")
+    if sheet.teacher_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Feuille appartenant à un autre enseignant")
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(sheet, field, value)
+    await db.commit()
+    await db.refresh(sheet)
+    return sheet
+
+
+@router.delete("/{sheet_id}", status_code=204)
+async def delete_sheet(
+    sheet_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("teacher", "admin")),
+):
+    result = await db.execute(select(Sheet).where(Sheet.id == sheet_id))
+    sheet = result.scalar_one_or_none()
+    if not sheet:
+        raise HTTPException(status_code=404, detail="Feuille introuvable")
+    if sheet.teacher_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Feuille appartenant à un autre enseignant")
+    await db.delete(sheet)
+    await db.commit()
 
 
 @router.delete("/{sheet_id}/exercises/{item_id}", status_code=204)

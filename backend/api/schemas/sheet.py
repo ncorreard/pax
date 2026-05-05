@@ -40,6 +40,25 @@ class SheetResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SheetUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    author: str | None = None
+    keywords: list[str] | None = None
+    level: str | None = None
+    domain: str | None = None
+    status: int | None = None
+    open_at: datetime | None = None
+    close_at: datetime | None = None
+
+    @field_validator("status")
+    @classmethod
+    def status_valid(cls, v: int | None) -> int | None:
+        if v is not None and v not in (0, 1, 3):
+            raise ValueError("status doit être 0 (caché), 1 (visible) ou 3 (testez-vous)")
+        return v
+
+
 class SheetDetailResponse(SheetResponse):
     items: list["SheetItemResponse"]
 
